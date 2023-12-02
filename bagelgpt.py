@@ -1,5 +1,7 @@
 import os                     # Importing the os module
-import openai                # Importing the openai module
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))                # Importing the openai module
 import requests              # Importing the requests module
 from PIL import Image        # Importing the Image module from PIL (Python Imaging Library)
 from io import BytesIO       # Importing the BytesIO module from io
@@ -8,7 +10,6 @@ from urllib.parse import urlparse # Importing the urlparse module from urllib.pa
 
 class gpt:
     def __init__(self):
-        openai.api_key = os.getenv('OPENAI_API_KEY')                    # Set the API key for OpenAI API access
         self.generate_completion_fail = False             # Initialize the generation completion fail flag to False
         self.generate_chat_completion_fail = False        # Initialize the chat generation completion fail flag to False
         self.generate_chad_completion_fail = False        # Initialize the chad generation completion fail flag to False
@@ -21,15 +22,12 @@ class gpt:
         self.generate_completion_fail = False  # Initialize the completion fail flag to False
 
         try:
-            response = openai.Completion.create(
-                # Create a new completion request using the OpenAI API with the given prompt
-                engine="text-davinci-003",
-                prompt=prompt,
-                max_tokens=2000,
-                n=1,
-                stop=None,
-                temperature=0.33,
-            )
+            response = client.completions.create(engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=2000,
+            n=1,
+            stop=None,
+            temperature=0.33)
 
             print(response)  # Print the response object returned by the OpenAI API
             filtered_response = response.choices[
@@ -42,37 +40,37 @@ class gpt:
             else:  # Otherwise, return the filtered response as a single message
                 return filtered_response
 
-        except openai.error.Timeout as e:  # Catch a timeout error and set the completion fail flag to True
+        except OpenAI.Timeout as e:  # Catch a timeout error and set the completion fail flag to True
             # Handle timeout error, e.g. retry or log
             self.generate_completion_fail = True
             print(f"OpenAI API request timed out: {e}")
             return f"OpenAI API request timed out: {e}"
-        except openai.error.APIError as e:  # Catch an API error and set the completion fail flag to True
+        except OpenAI.APIError as e:  # Catch an API error and set the completion fail flag to True
             # Handle API error, e.g. retry or log
             self.generate_completion_fail = True
             print(f"OpenAI API returned an API Error: {e}")
             return f"OpenAI API returned an API Error: {e}"
-        except openai.error.APIConnectionError as e:  # Catch an API connection error and set the completion fail flag to True
+        except OpenAI.APIConnectionError as e:  # Catch an API connection error and set the completion fail flag to True
             # Handle connection error, e.g. check network or log
             self.generate_completion_fail = True
             print(f"OpenAI API request failed to connect: {e}")
             return f"OpenAI API request failed to connect: {e}"
-        except openai.error.InvalidRequestError as e:  # Catch an invalid request error and set the completion fail flag to True
+        except OpenAI.InvalidRequestError as e:  # Catch an invalid request error and set the completion fail flag to True
             # Handle invalid request error, e.g. validate parameters or log
             self.generate_completion_fail = True
             print(f"OpenAI API request was invalid: {e}")
             return f"OpenAI API request was invalid: {e}"
-        except openai.error.AuthenticationError as e:  # Catch an authentication error and set the completion fail flag to True
+        except OpenAI.error.AuthenticationError as e:  # Catch an authentication error and set the completion fail flag to True
             # Handle authentication error, e.g. check credentials or log
             self.generate_completion_fail = True
             print(f"OpenAI API request was not authorized: {e}")
             return f"OpenAI API request was not authorized: {e}"
-        except openai.error.PermissionError as e:  # Catch a permission error and set the completion fail flag to True
+        except OpenAI.error.PermissionError as e:  # Catch a permission error and set the completion fail flag to True
             # Handle permission error, e.g. check scope or log
             self.generate_completion_fail = True
             print(f"OpenAI API request was not permitted: {e}")
             return f"OpenAI API request was not permitted: {e}"
-        except openai.error.RateLimitError as e:  # Catch a rate limit error and set the completion fail flag to True
+        except OpenAI.error.RateLimitError as e:  # Catch a rate limit error and set the completion fail flag to True
             # Handle rate limit error, e.g. wait or log
             self.generate_completion_fail = True
             print(f"OpenAI API request exceeded rate limit: {e}")
@@ -84,13 +82,11 @@ class gpt:
         self.generate_chat_completion_fail = False   # Initialize the chat completion fail flag to False
 
         try:
-            response = openai.ChatCompletion.create( # Create a new chat completion request using the OpenAI API with the given prompt
-                model="gpt-3.5-turbo",
-                messages=[{"role": "system", "content": "You are a helpful assistant."},
-                          {"role": "user", "content": prompt}],
-                temperature=0.5,
-                max_tokens=2000,
-            )
+            response = client.chat.completions.create(model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": "You are a helpful assistant."},
+                      {"role": "user", "content": prompt}],
+            temperature=0.5,
+            max_tokens=2000)
 
             print(response)                           # Print the response object returned by the OpenAI API
             filtered_response = response.get('choices')[-1].get('message').get('content')   # Extract the text from the last message in the response object
@@ -102,37 +98,37 @@ class gpt:
             else:                                     # Otherwise, return the filtered response as a single message
                 return filtered_response
 
-        except openai.error.Timeout as e:             # Catch a timeout error and set the chat completion fail flag to True
+        except OpenAI.Timeout as e:             # Catch a timeout error and set the chat completion fail flag to True
             # Handle timeout error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request timed out: {e}")
             return f"OpenAI API request timed out: {e}"
-        except openai.error.APIError as e:            # Catch an API error and set the chat completion fail flag to True
+        except OpenAI.APIError as e:            # Catch an API error and set the chat completion fail flag to True
             # Handle API error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API returned an API Error: {e}")
             return f"OpenAI API returned an API Error: {e}"
-        except openai.error.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
+        except OpenAI.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
             # Handle connection error, e.g. check network or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request failed to connect: {e}")
             return f"OpenAI API request failed to connect: {e}"
-        except openai.error.InvalidRequestError as e: # Catch an invalid request error and set the chat completion fail flag to True
+        except OpenAI.InvalidRequestError as e: # Catch an invalid request error and set the chat completion fail flag to True
             # Handle invalid request error, e.g. validate parameters or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was invalid: {e}")
             return f"OpenAI API request was invalid: {e}"
-        except openai.error.AuthenticationError as e: # Catch an authentication error and set the chat completion fail flag to True
+        except OpenAI.error.AuthenticationError as e: # Catch an authentication error and set the chat completion fail flag to True
             # Handle authentication error, e.g. check credentials or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not authorized: {e}")
             return f"OpenAI API request was not authorized: {e}"
-        except openai.error.PermissionError as e:     # Catch a permission error and set the chat completion fail flag to True
+        except OpenAI.error.PermissionError as e:     # Catch a permission error and set the chat completion fail flag to True
             # Handle permission error, e.g. check scope or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not permitted: {e}")
             return f"OpenAI API request was not permitted: {e}"
-        except openai.error.RateLimitError as e:      # Catch a rate limit error and set the chat completion fail flag to True
+        except OpenAI.error.RateLimitError as e:      # Catch a rate limit error and set the chat completion fail flag to True
             # Handle rate limit error, e.g
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request exceeded rate limit: {e}")
@@ -153,12 +149,10 @@ class gpt:
             message_prompt = self.get_message_history_prompt(user_history, assistant_history, role_prompt, token_limit)
 
             # Create a new chat completion request using the OpenAI API with the message history prompt
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=message_prompt,
-                temperature=0.5,
-                max_tokens=1000,
-            )
+            response = client.chat.completions.create(model="gpt-3.5-turbo",
+            messages=message_prompt,
+            temperature=0.5,
+            max_tokens=1000)
 
             print(response)                           # Print the response object returned by the OpenAI API
             filtered_response = response.get('choices')[-1].get('message').get('content')  # Extract the text from the last message in the response object
@@ -170,37 +164,37 @@ class gpt:
             else:                                     # Otherwise, return the filtered response as a single message
                 return filtered_response
 
-        except openai.error.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
+        except OpenAI.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
             # Handle timeout error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request timed out: {e}")
             return f"OpenAI API request timed out: {e}"
-        except openai.error.APIError as e:  # Catch an API error and set the chat completion fail flag to True
+        except OpenAI.APIError as e:  # Catch an API error and set the chat completion fail flag to True
             # Handle API error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API returned an API Error: {e}")
             return f"OpenAI API returned an API Error: {e}"
-        except openai.error.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
+        except OpenAI.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
             # Handle connection error, e.g. check network or lo
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request failed to connect: {e}")
             return f"OpenAI API request failed to connect: {e}"
-        except openai.error.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
+        except OpenAI.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
             # Handle invalid request error, e.g. validate parameters or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was invalid: {e}")
             return f"OpenAI API request was invalid: {e}"
-        except openai.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
+        except OpenAI.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
             # Handle authentication error, e.g. check credentials or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not authorized: {e}")
             return f"OpenAI API request was not authorized: {e}"
-        except openai.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
+        except OpenAI.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
             # Handle permission error, e.g. check scope or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not permitted: {e}")
             return f"OpenAI API request was not permitted: {e}"
-        except openai.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
+        except OpenAI.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
             # Handle rate limit error, e.g
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request exceeded rate limit: {e}")
@@ -247,12 +241,10 @@ class gpt:
             message_prompt = self.get_message_history_prompt(user_history, assistant_history, role_prompt, token_limit)
 
             # Create a new chat completion request using the OpenAI API with the message history prompt
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=message_prompt,
-                temperature=0.5,
-                max_tokens=1000,
-            )
+            response = client.chat.completions.create(model="gpt-3.5-turbo",
+            messages=message_prompt,
+            temperature=0.5,
+            max_tokens=1000)
 
             print(response)                           # Print the response object returned by the OpenAI API
             filtered_response = response.get('choices')[-1].get('message').get('content')  # Extract the text from the last message in the response object
@@ -264,37 +256,37 @@ class gpt:
             else:                                     # Otherwise, return the filtered response as a single message
                 return filtered_response
 
-        except openai.error.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
+        except OpenAI.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
             # Handle timeout error, e.g. retry or log
             self.generate_chad_completion_fail = True
             print(f"OpenAI API request timed out: {e}")
             return f"OpenAI API request timed out: {e}"
-        except openai.error.APIError as e:  # Catch an API error and set the chat completion fail flag to True
+        except OpenAI.APIError as e:  # Catch an API error and set the chat completion fail flag to True
             # Handle API error, e.g. retry or log
             self.generate_chad_completion_fail = True
             print(f"OpenAI API returned an API Error: {e}")
             return f"OpenAI API returned an API Error: {e}"
-        except openai.error.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
+        except OpenAI.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
             # Handle connection error, e.g. check network or lo
             self.generate_chad_completion_fail = True
             print(f"OpenAI API request failed to connect: {e}")
             return f"OpenAI API request failed to connect: {e}"
-        except openai.error.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
+        except OpenAI.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
             # Handle invalid request error, e.g. validate parameters or log
             self.generate_chad_completion_fail = True
             print(f"OpenAI API request was invalid: {e}")
             return f"OpenAI API request was invalid: {e}"
-        except openai.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
+        except OpenAI.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
             # Handle authentication error, e.g. check credentials or log
             self.generate_chad_completion_fail = True
             print(f"OpenAI API request was not authorized: {e}")
             return f"OpenAI API request was not authorized: {e}"
-        except openai.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
+        except OpenAI.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
             # Handle permission error, e.g. check scope or log
             self.generate_chad_completion_fail = True
             print(f"OpenAI API request was not permitted: {e}")
             return f"OpenAI API request was not permitted: {e}"
-        except openai.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
+        except OpenAI.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
             # Handle rate limit error, e.g
             self.generate_chad_completion_fail = True
             print(f"OpenAI API request exceeded rate limit: {e}")
@@ -307,12 +299,10 @@ class gpt:
 
         try:
             # Generate a new image using the OpenAI API with the given prompt
-            response = openai.Image.create(
-                prompt=prompt,
-                n=1,
-                size="1024x1024",
-                response_format="url"
-            )
+            response = client.images.generate(prompt=prompt,
+            n=1,
+            size="1024x1024",
+            response_format="url")
 
             print(response)           # Print the response object returned by the OpenAI API
 
@@ -324,37 +314,37 @@ class gpt:
 
             return "response_image.png" # Return the name of the image file
 
-        except openai.error.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
+        except OpenAI.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
             # Handle timeout error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request timed out: {e}")
             return f"OpenAI API request timed out: {e}"
-        except openai.error.APIError as e:  # Catch an API error and set the chat completion fail flag to True
+        except OpenAI.APIError as e:  # Catch an API error and set the chat completion fail flag to True
             # Handle API error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API returned an API Error: {e}")
             return f"OpenAI API returned an API Error: {e}"
-        except openai.error.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
+        except OpenAI.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
             # Handle connection error, e.g. check network or lo
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request failed to connect: {e}")
             return f"OpenAI API request failed to connect: {e}"
-        except openai.error.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
+        except OpenAI.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
             # Handle invalid request error, e.g. validate parameters or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was invalid: {e}")
             return f"OpenAI API request was invalid: {e}"
-        except openai.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
+        except OpenAI.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
             # Handle authentication error, e.g. check credentials or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not authorized: {e}")
             return f"OpenAI API request was not authorized: {e}"
-        except openai.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
+        except OpenAI.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
             # Handle permission error, e.g. check scope or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not permitted: {e}")
             return f"OpenAI API request was not permitted: {e}"
-        except openai.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
+        except OpenAI.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
             # Handle rate limit error, e.g
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request exceeded rate limit: {e}")
@@ -381,12 +371,10 @@ class gpt:
 
             # Open the temporary image file and send it to the OpenAI API to generate image variations
             with open("temp_image.png", "rb") as temp_image_file:
-                response = openai.Image.create_variation(
-                    image=temp_image_file,
-                    n=1,
-                    size="1024x1024",
-                    response_format="url"
-                )
+                response = client.images.generate(image=temp_image_file,
+                n=1,
+                size="1024x1024",
+                response_format="url")
 
             print(response)  # Print the response object returned by the OpenAI API
 
@@ -397,37 +385,37 @@ class gpt:
 
             return "response_image.png" # Return the name of the image file
 
-        except openai.error.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
+        except OpenAI.Timeout as e:  # Catch a timeout error and set the chat completion fail flag to True
             # Handle timeout error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request timed out: {e}")
             return f"OpenAI API request timed out: {e}"
-        except openai.error.APIError as e:  # Catch an API error and set the chat completion fail flag to True
+        except OpenAI.APIError as e:  # Catch an API error and set the chat completion fail flag to True
             # Handle API error, e.g. retry or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API returned an API Error: {e}")
             return f"OpenAI API returned an API Error: {e}"
-        except openai.error.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
+        except OpenAI.APIConnectionError as e:  # Catch an API connection error and set the chat completion fail flag to True
             # Handle connection error, e.g. check network or lo
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request failed to connect: {e}")
             return f"OpenAI API request failed to connect: {e}"
-        except openai.error.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
+        except OpenAI.InvalidRequestError as e:  # Catch an invalid request error and set the chat completion fail flag to True
             # Handle invalid request error, e.g. validate parameters or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was invalid: {e}")
             return f"OpenAI API request was invalid: {e}"
-        except openai.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
+        except OpenAI.error.AuthenticationError as e:  # Catch an authentication error and set the chat completion fail flag to True
             # Handle authentication error, e.g. check credentials or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not authorized: {e}")
             return f"OpenAI API request was not authorized: {e}"
-        except openai.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
+        except OpenAI.error.PermissionError as e:  # Catch a permission error and set the chat completion fail flag to True
             # Handle permission error, e.g. check scope or log
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request was not permitted: {e}")
             return f"OpenAI API request was not permitted: {e}"
-        except openai.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
+        except OpenAI.error.RateLimitError as e:  # Catch a rate limit error and set the chat completion fail flag to True
             # Handle rate limit error, e.g
             self.generate_chat_completion_fail = True
             print(f"OpenAI API request exceeded rate limit: {e}")
