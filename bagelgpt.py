@@ -8,8 +8,7 @@ from urllib.parse import urlparse # Importing the urlparse module from urllib.pa
 
 class gpt:
     def __init__(self):
-        self.BINGBONG = os.getenv('BINGBONG')             # Retrieve the BINGBONG API key from the system environment variable
-        openai.api_key = self.BINGBONG                    # Set the BINGBONG API key for OpenAI API access
+        openai.api_key = os.getenv('OPENAI_API_KEY')                    # Set the API key for OpenAI API access
         self.generate_completion_fail = False             # Initialize the generation completion fail flag to False
         self.generate_chat_completion_fail = False        # Initialize the chat generation completion fail flag to False
         self.generate_chad_completion_fail = False        # Initialize the chad generation completion fail flag to False

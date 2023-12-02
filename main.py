@@ -1,5 +1,5 @@
 # Importing necessary libraries
-from refikigpt import gpt  # importing custom library "refikigpt" openaai API wrapper
+from bagelgpt import gpt  # importing custom library "refikigpt" openaai API wrapper
 import discord  # importing discord API wrapper library
 from discord.ext import tasks  # importing tasks module for Discord Bot tasks
 import os  # importing OS module for accessing environment variables
@@ -10,7 +10,11 @@ import subprocess # importing subprocess for calling update script
 load_dotenv()  # loading environment variables from .env file
 
 # Getting API keys from environment variables
-RG_KEY = os.environ.get('RG_KEY')  # API key for refikigpt library
+DISCORD_API_KEY = os.environ.get('DISCORD_API_KEY')  # API key for BagelBot 9000
+DISCORD_GENERAL_CHANNEL = os.environ.get('DISCORD_GENERAL_CHANNEL')
+DISCORD_PLC_BOT_CHANNEL = os.environ.get('DISCORD_PLC_BOT_CHANNEL')
+
+""" 
 GPT_35_CH_0Z_ID = os.environ.get('GPT_35_CH_0Z_ID')  # Discord channel ID for GPT-3.5 chat
 GPT_35_CH_CT_ID = os.environ.get('GPT_35_CH_CT_ID')  # Discord channel ID for GPT-3.5 chatbot (conversation tracking)
 GPT_DAV_CH_0Z_ID = os.environ.get('GPT_DAV_CH_0Z_ID')  # Discord channel ID for GPT-3.5 chatbot (David's version)
@@ -21,6 +25,7 @@ if SERVER_OS == "Linux":
       SERVER_UPDATES_CH_ID = os.environ.get('SERVER_UPDATES_CH_ID') # Discord channel for bot update script
       SCRIPT_BIN = os.environ.get('SCRIPT_BIN') # Location of bin file for executing update script
       SCRIPT_PATH = os.environ.get('SCRIPT_PATH') # Location of Discord Bot update script
+ """
 
 # Initializing the gpt class in the refikigpt library
 gpt = gpt()
@@ -36,24 +41,25 @@ async def on_ready():
     # Printing a message to the console to confirm that the Bot is ready
     print(f'{client.user} has connected to Discord!')
       
-    channel = client.get_channel(int(CHIT_CHAT_CH_ID))  # Get the Discord channel object for Chit-Chat
+    channel = client.get_channel(int(DISCORD_GENERAL_CHANNEL))  # Get the Discord channel object for Chit-Chat
     await channel.send("I'm back baby!")
 
     # Starting background tasks for various chatbots using Discord.py's Task object
     # 'respond_gpt_35_turbo_0Z', 'respond_gpt_35_turbo_chat', 'respond_gpt_dav_0Z', 'respond_dalle_2'
     respond_gpt_35_turbo_0Z.start()  # Starting task for GPT-3.5 chatbot in channel 0Z
-    respond_gpt_35_turbo_chat.start()  # Starting task for GPT-3.5 chatbot with conversation tracking
-    respond_gpt_dav_0Z.start()  # Starting task for David's version of GPT-3.5 chatbot in channel 0Z
-    respond_dalle_2.start()  # Starting task for DALLE-2 image generation model
-    if SERVER_OS == "Linux":
-       respond_update_bot.start() # Starting task for bot update script
+    #respond_gpt_35_turbo_chat.start()  # Starting task for GPT-3.5 chatbot with conversation tracking
+    #respond_gpt_dav_0Z.start()  # Starting task for David's version of GPT-3.5 chatbot in channel 0Z
+    #respond_dalle_2.start()  # Starting task for DALLE-2 image generation model
+    #if SERVER_OS == "Linux":
+    #   respond_update_bot.start() # Starting task for bot update script
+
 
 # Defining a task to run GPT-3.5 chatbot in channel 0Z every 10 seconds
 @tasks.loop(seconds=3)
 async def respond_gpt_35_turbo_0Z():
     await client.wait_until_ready()  # Wait for the client to be ready before starting the task
 
-    channel = client.get_channel(int(GPT_35_CH_0Z_ID))  # Get the Discord channel object for channel 0Z
+    channel = client.get_channel(int(DISCORD_PLC_BOT_CHANNEL))  # Get the Discord channel object for channel 0Z
 
     while not client.is_closed():  # Loop until the client is closed
         message = await client.wait_for('message')  # Wait for a new message in the channel
@@ -74,12 +80,14 @@ async def respond_gpt_35_turbo_0Z():
             else:  # If the response is a single message
                 await channel.send(response)  # Send the message to the channel
 
+
+"""
 # Defining a task to run GPT-3.5 chatbot with conversation tracking every 10 seconds
 @tasks.loop(seconds=3)
 async def respond_gpt_35_turbo_chat():
     await client.wait_until_ready()  # Wait for the client to be ready before starting the task
 
-    channel = client.get_channel(int(GPT_35_CH_CT_ID))  # Get the Discord channel object for the conversation tracking channel
+    channel = client.get_channel(int(DISCORD_PLC_BOT_CHANNEL))  # Get the Discord channel object for the conversation tracking channel
 
     while not client.is_closed():  # Loop until the client is closed
         message = await client.wait_for('message')  # Wait for a new message in the channel
@@ -112,33 +120,9 @@ async def respond_gpt_35_turbo_chat():
                     await channel.send(item)
             else:  # If the response is a single message
                 await channel.send(response)  # Send the message to the channel
+"""
 
-# Defining a task to run David's version of GPT-3.5 chatbot in channel 0Z every 10 seconds
-@tasks.loop(seconds=3)
-async def respond_gpt_dav_0Z():
-    await client.wait_until_ready()  # Wait for the client to be ready before starting the task
-
-    channel = client.get_channel(int(GPT_DAV_CH_0Z_ID))  # Get the Discord channel object for David's version of the chatbot in channel 0Z
-
-    while not client.is_closed():  # Loop until the client is closed
-        message = await client.wait_for('message')  # Wait for a new message in the channel
-
-        if message.author == client.user or message.channel != channel:  # Ignore messages from the bot or other channels
-            return
-
-        await channel.send("Attempting to create response...")  # Send a message to the channel to indicate that the chatbot is processing the message
-
-        response = gpt.get_completion(message.content)  # Get a response from the chatbot based on the input message
-
-        if gpt.generate_completion_fail:  # Check if there was an error generating the chatbot's response
-            await channel.send(response + "\n\nChat completion failed. Please try again.")  # If there was an error, send a message to the channel with the error message
-        else:
-            if isinstance(response, list):  # Check if the response is a list of messages
-                for item in response:  # If so, iterate through the list and send each message to the channel
-                    await channel.send(item)
-            else:  # If the response is a single message
-                await channel.send(response)  # Send the message to the channel
-
+"""                
 # Defining a task to run the DALLE-2 image generation model every 10 seconds
 @tasks.loop(seconds=3)
 async def respond_dalle_2():
@@ -176,7 +160,9 @@ async def respond_dalle_2():
             else:
                 file = discord.File(image_response, filename=image_response)  # Create a file object for the image variation
                 await channel.send(file=file)  # Send the image variation to the channel
+"""
 
+"""
 # Defining a task to update the Discord bot script every 10 seconds
 @tasks.loop(seconds=10)
 async def respond_update_bot():
@@ -195,10 +181,11 @@ async def respond_update_bot():
            await channel.send("Updating Discord bot script, please stand by...")
            process = subprocess.Popen([SCRIPT_BIN,SCRIPT_PATH])
            process.wait()
+"""
 
 #Starts the discord client using the API key
 try:
-    client.run(RG_KEY)
+    client.run(DISCORD_API_KEY)
 except KeyboardInterrupt:
     print(f'Detected SIGINT, closing process!')
 finally:
