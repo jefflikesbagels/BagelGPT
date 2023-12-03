@@ -1,10 +1,10 @@
-from bagelgpt import bagelgpt
-import discord
-from discord.ext import commands
+import sys
 import os
 import asyncio
 from dotenv import load_dotenv
-import subprocess
+from bagelgpt import bagelgpt
+import discord
+from discord.ext import commands
 
 # Load environment variables from .env file
 load_dotenv()
@@ -55,6 +55,9 @@ async def on_message(message):
     if message.content.startswith('/history='):
         await history_command(message)
         return
+    if message.content.startswith('/update'):
+        await update_command()
+        return
 
     # Send a message to the channel to indicate that the chatbot is processing the message
     response_message = await channel.send("Attempting to create response...")
@@ -99,27 +102,10 @@ async def history_command(message):
     except ValueError:
         await message.channel.send("Invalid command format. Use '/history=<limit>'.")
 
-
-"""
-# Defining a task to update the Discord bot script every 10 seconds
-@tasks.loop(seconds=10)
-async def respond_update_bot():
-   await bot.wait_until_ready()  # Wait for the client to be ready before starting the task
-
-   channel = bot.get_channel(int(SERVER_UPDATES_CH_ID))  # Get the Discord channel object for channel 0Z
-
-   while not bot.is_closed():  # Loop until the client is closed
-       message = await bot.wait_for('message')  # Wait for a new message in the channel
-
-       if message.author == bot.user or message.channel != channel:  # Ignore messages from the bot or other channels
-           return
-
-       if message.content.startswith("!update"):
-           channel = bot.get_channel(int(CHIT_CHAT_CH_ID))  # Get the Discord channel object for Chit-Chat
-           await channel.send("Updating Discord bot script, please stand by...")
-           process = subprocess.Popen([SCRIPT_BIN,SCRIPT_PATH])
-           process.wait()
-"""
+async def update_command():
+    await logout()
+    await asyncio.sleep(5)
+    sys.exit(1001)
 
 async def send_final_message():
     await bot.wait_until_ready()
