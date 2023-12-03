@@ -73,7 +73,7 @@ async def on_message(message):
     # Use conversation history for context when getting a response
     context = "\n".join(conversation_history[channel_id])
     print(f"Context:", context)
-    response = gpt.get_chat_completion(message.content, context)
+    response = gpt.get_chat_completion(message.content, context, channel.topic)
     print(f"Got response from GPT:", response)
 
     await response_message.delete()

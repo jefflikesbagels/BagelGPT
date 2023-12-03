@@ -9,13 +9,13 @@ class bagelgpt:
         self.client = OpenAI(api_key=self.api_key)
 
     #Function to get Zero Shot Chat Completion
-    def get_chat_completion(self, prompt, context):
+    def get_chat_completion(self, prompt, context, topic):
 
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "Your name is BagelGPT and you like to answer in rap battles."},
+                    {"role": "system", "content": topic},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.5,
