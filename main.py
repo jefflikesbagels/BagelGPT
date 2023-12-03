@@ -38,65 +38,53 @@ async def on_ready():
 
 # Define an event handler for responding to messages in the "Rap-Bot" channel
 @bot.event
-async def rap_bot(message):
+async def on_message(message):
     global history_limit
 
     print(f"Received message: {message.content}")
     await bot.process_commands(message)
 
-    # Get the Discord "Rap-Bot" channel object
-    channel = bot.get_channel(int(DISCORD_RAP_BOT_CHANNEL))
+    # Get the Discord "General" & "Rap-Bot" channel objects
+    rap_channel = bot.get_channel(int(DISCORD_RAP_BOT_CHANNEL))
+    general_channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))
+
+    if message.author != bot.user and message.channel == general_channel:
+        if message.content.startswith('/update'):
+            await update_command()
+            return
 
     # Ignore messages from the bot or other channels
-    if message.author == bot.user or message.channel != channel:
-        return
+    elif message.author != bot.user and message.channel == rap_channel:
 
-    # Check if the message starts with the command prefix
-    if message.content.startswith('/history='):
-        await history_command(message)
-        return
+        # Check if the message starts with the command prefix
+        if message.content.startswith('/history='):
+            await history_command(message)
+            return
 
-    # Send a message to the channel to indicate that the chatbot is processing the message
-    response_message = await channel.send("Attempting to create response...")
-    print(f"Attempting to create response...")
+        # Send a message to the channel to indicate that the chatbot is processing the message
+        response_message = await rap_channel.send("Attempting to create response...")
+        print(f"Attempting to create response...")
 
-    # Get or initialize conversation history for the channel
-    channel_id = message.channel.id
-    if channel_id not in conversation_history:
-            conversation_history[channel_id] = []
+        # Get or initialize conversation history for the channel
+        channel_id = message.channel.id
+        if channel_id not in conversation_history:
+                conversation_history[channel_id] = []
 
-    # Append the latest message to the conversation history
-    conversation_history[channel_id].append(message.content)
+        # Append the latest message to the conversation history
+        conversation_history[channel_id].append(message.content)
 
-    # Limit conversation history to a certain number of messages (e.g., last 10 messages)
-    conversation_history[channel_id] = conversation_history[channel_id][-history_limit:]
+        # Limit conversation history to a certain number of messages (e.g., last 10 messages)
+        conversation_history[channel_id] = conversation_history[channel_id][-history_limit:]
 
-    # Use conversation history for context when getting a response
-    context = "\n".join(conversation_history[channel_id])
-    print(f"Context:", context)
-    response = gpt.get_chat_completion(message.content, context, channel.topic)
-    print(f"Got response from GPT:", response)
+        # Use conversation history for context when getting a response
+        context = "\n".join(conversation_history[channel_id])
+        print(f"Context:", context)
+        response = gpt.get_chat_completion(message.content, context, rap_channel.topic)
+        print(f"Got response from GPT:", response)
 
-    # Delete the original attempting to create response message and insert the final response
-    await response_message.delete()
-    await channel.send(response)
-
-@bot.event
-async def general_bot(message):
-
-    print(f"Received message: {message.content}")
-    await bot.process_commands(message)
-
-    # Get the Discord "Rap-Bot" channel object
-    channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))
-
-    # Ignore messages from the bot or other channels
-    if message.author == bot.user or message.channel != channel:
-        return
-
-    if message.content.startswith('/update'):
-        await update_command()
-        return
+        # Delete the original attempting to create response message and insert the final response
+        await response_message.delete()
+        await rap_channel.send(response)
 
 async def history_command(message):
     global history_limit
@@ -117,8 +105,7 @@ async def history_command(message):
         await message.channel.send("Invalid command format. Use '/history=<limit>'.")
 
 async def update_command():
-    await logout()
-    await asyncio.sleep(5)
+    # await logout()
     sys.exit(1001)
 
 async def send_final_message():
