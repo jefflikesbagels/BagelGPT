@@ -38,7 +38,7 @@ async def on_ready():
 
 # Define an event handler for responding to messages in the "Rap-Bot" channel
 @bot.event
-async def on_message(message):
+async def rap_bot(message):
     global history_limit
 
     print(f"Received message: {message.content}")
@@ -54,9 +54,6 @@ async def on_message(message):
     # Check if the message starts with the command prefix
     if message.content.startswith('/history='):
         await history_command(message)
-        return
-    if message.content.startswith('/update'):
-        await update_command()
         return
 
     # Send a message to the channel to indicate that the chatbot is processing the message
@@ -83,6 +80,23 @@ async def on_message(message):
     # Delete the original attempting to create response message and insert the final response
     await response_message.delete()
     await channel.send(response)
+
+@bot.event
+async def general_bot(message):
+
+    print(f"Received message: {message.content}")
+    await bot.process_commands(message)
+
+    # Get the Discord "Rap-Bot" channel object
+    channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))
+
+    # Ignore messages from the bot or other channels
+    if message.author == bot.user or message.channel != channel:
+        return
+
+    if message.content.startswith('/update'):
+        await update_command()
+        return
 
 async def history_command(message):
     global history_limit
