@@ -9,7 +9,7 @@ class bagelgpt:
         self.client = OpenAI(api_key=self.api_key)
 
     #Function to get Zero Shot Chat Completion
-    def get_chat_completion(self, prompt, context, topic):
+    def get_chat_completion(self, prompt, message_context, topic):
 
         try:
             response = self.client.chat.completions.create(
@@ -20,7 +20,7 @@ class bagelgpt:
                 ],
                 temperature=0.5,
                 max_tokens=2000,
-                #context=context,
+                #context=message_context,
             )
 
             # Print the response object returned by the OpenAI API

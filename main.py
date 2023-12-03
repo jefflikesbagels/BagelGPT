@@ -1,4 +1,3 @@
-import sys
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -25,6 +24,9 @@ intents.message_content = True  # enabling message content intent for Discord AP
 bot = commands.Bot(command_prefix='/', intents=intents)
 history_limit = 10
 conversation_history = {}
+
+class UpdateCommand(Exception):
+    pass
 
 # Define event handler for when the Discord Bot is ready
 @bot.event
@@ -106,13 +108,12 @@ async def history_command(message):
         await message.channel.send("Invalid command format. Use '/history=<limit>'.")
 
 async def update_command():
-    # await logout()
-    sys.exit(1001)
+    raise UpdateCommand()
 
 async def send_final_message():
     await bot.wait_until_ready()
-    channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))  # Choose your channel ID
-    await channel.send("Bite my shiny metal ass!")  # Your final message
+    channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))
+    await channel.send("Bite my shiny metal ass!")
 
 async def logout():
     try:
@@ -125,6 +126,8 @@ async def main():
         await bot.start(DISCORD_API_KEY)
     except KeyboardInterrupt:
         print("Detected SIGINT, closing process!")
+    except UpdateCommand:
+        print("Exiting with code 1001")
     finally:
         print(f"Logging {bot.user} out of Discord!")
         await logout()
