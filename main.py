@@ -48,14 +48,15 @@ async def on_message(message):
     rap_channel = bot.get_channel(int(DISCORD_RAP_BOT_CHANNEL))
     general_channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))
 
-    if message.author != bot.user and message.channel == general_channel:
+    # Ignore messages from the bot
+    if message.author == bot.user: return
+
+    if message.channel == general_channel:
         if message.content.startswith('/update'):
             await update_command()
             return
 
-    # Ignore messages from the bot or other channels
-    elif message.author != bot.user and message.channel == rap_channel:
-
+    elif message.channel == rap_channel:
         # Check if the message starts with the command prefix
         if message.content.startswith('/history='):
             await history_command(message)
