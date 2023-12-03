@@ -1,6 +1,7 @@
 from bagelgpt import bagelgpt
 import discord
 from discord.ext import tasks
+from discord.ext import commands
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -14,7 +15,7 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 OPENAI_MODEL = os.environ.get('OPENAI_MODEL')
 DISCORD_API_KEY = os.environ.get('DISCORD_API_KEY')
 DISCORD_GENERAL_CHANNEL = os.environ.get('DISCORD_GENERAL_CHANNEL')
-DISCORD_PLC_BOT_CHANNEL = os.environ.get('DISCORD_PLC_BOT_CHANNEL')
+DISCORD_RAP_BOT_CHANNEL = os.environ.get('DISCORD_RAP_BOT_CHANNEL')
 
 # Initializing the gpt class in the bagelgpt library
 gpt = bagelgpt(api_key=OPENAI_API_KEY, model=OPENAI_MODEL)
@@ -22,90 +23,123 @@ gpt = bagelgpt(api_key=OPENAI_API_KEY, model=OPENAI_MODEL)
 # Setting up Discord Bot
 intents = discord.Intents.default()  # getting default intents for Discord API
 intents.message_content = True  # enabling message content intent for Discord API
-client = discord.Client(intents=intents)  # creating Discord Bot client with the specified intents
+bot = commands.Bot(command_prefix='/', intents=intents)
+history_limit = 10
+conversation_history = {}
 
 # Defining event handler for when the Discord Bot is ready
-@client.event
+@bot.event
 async def on_ready():
     # Printing a message to the console to confirm that the Bot is ready
-    print(f'{client.user} has connected to Discord!')
+    print(f'{bot.user} has connected to Discord!')
       
-    channel = client.get_channel(int(DISCORD_GENERAL_CHANNEL))  # Get the Discord channel object for Chit-Chat
+    channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))  # Get the Discord channel object for Chit-Chat
     await channel.send("I'm back baby!")
 
-    # Starting background tasks for various chatbots using Discord.py's Task object
-    on_message.start()  # Starting task for GPT-3.5 chatbot in channel 0Z
-    #if SERVER_OS == "Linux":
-    #   respond_update_bot.start() # Starting task for bot update script
-
-
 # Defining a task to run GPT-3.5 chatbot in channel 0Z every 10 seconds
-@tasks.loop(seconds=3)
-async def on_message():
-    # Wait for the client to be ready before starting the task
-    await client.wait_until_ready()
+@bot.event
+async def on_message(message):
+    global history_limit
 
-    
-    channel = client.get_channel(int(DISCORD_PLC_BOT_CHANNEL))
+    print(f"Received message: {message.content}")
+    await bot.process_commands(message)
 
-    # Loop until the client is closed
-    while not client.is_closed():
+    channel = bot.get_channel(int(DISCORD_RAP_BOT_CHANNEL))
 
-        # Wait for a new message in the channel
-        message = await client.wait_for('message')
+    # Ignore messages from the bot or other channels
+    if message.author == bot.user or message.channel != channel:
+        return
 
-        # Ignore messages from the bot or other channels
-        if message.author == client.user or message.channel != channel:
-            return
+    # Check if the message starts with the command prefix
+    if message.content.startswith('/history='):
+        await history_command(message)
+        return
 
-        # Send a message to the channel to indicate that the chatbot is processing the message
-        await channel.send("Attempting to create response...")
+    # Send a message to the channel to indicate that the chatbot is processing the message
+    response_message = await channel.send("Attempting to create response...")
+    print(f"Attempting to create response...")
 
-        # Get a response from the chatbot based on the input message
-        response = gpt.get_chat_completion(message.content)
+    # Get or initialize conversation history for the channel
+    channel_id = message.channel.id
+    if channel_id not in conversation_history:
+            conversation_history[channel_id] = []
 
-        # Check if there was an error generating the chatbot's response
-        if gpt.generate_chat_completion_fail:
-            await channel.send(response + "\n\nChat completion failed. Please try again.")
-        else:
-            # Check if the response is a list of messages
-            if isinstance(response, list):
-                # If so, iterate through the list and send each message to the channel
-                for item in response:
-                    await channel.send(item)
-            # If the response is a single message
-            else:
-                # Send the message to the channel
-                await channel.send(response)
+    # Append the latest message to the conversation history
+    conversation_history[channel_id].append(message.content)
 
+    # Limit conversation history to a certain number of messages (e.g., last 10 messages)
+    conversation_history[channel_id] = conversation_history[channel_id][-history_limit:]
+
+    # Use conversation history for context when getting a response
+    context = "\n".join(conversation_history[channel_id])
+    print(f"Context:", context)
+    response = gpt.get_chat_completion(message.content, context)
+    print(f"Got response from GPT:", response)
+
+    await response_message.delete()
+    await channel.send(response)
+
+async def history_command(message):
+    global history_limit
+
+    try:
+        new_limit = int(message.content.split('=')[1])
+        history_limit = new_limit
+
+        channel_id = message.channel.id
+        if channel_id not in conversation_history:
+            conversation_history[channel_id] = []
+
+        conversation_history[channel_id] = conversation_history[channel_id][-history_limit:]
+
+        await message.channel.send(f"Updated conversation history limit to {history_limit}.")
+    except ValueError:
+        await message.channel.send("Invalid command format. Use '/history=<limit>'.")
 
 
 """
 # Defining a task to update the Discord bot script every 10 seconds
 @tasks.loop(seconds=10)
 async def respond_update_bot():
-   await client.wait_until_ready()  # Wait for the client to be ready before starting the task
+   await bot.wait_until_ready()  # Wait for the client to be ready before starting the task
 
-   channel = client.get_channel(int(SERVER_UPDATES_CH_ID))  # Get the Discord channel object for channel 0Z
+   channel = bot.get_channel(int(SERVER_UPDATES_CH_ID))  # Get the Discord channel object for channel 0Z
 
-   while not client.is_closed():  # Loop until the client is closed
-       message = await client.wait_for('message')  # Wait for a new message in the channel
+   while not bot.is_closed():  # Loop until the client is closed
+       message = await bot.wait_for('message')  # Wait for a new message in the channel
 
-       if message.author == client.user or message.channel != channel:  # Ignore messages from the bot or other channels
+       if message.author == bot.user or message.channel != channel:  # Ignore messages from the bot or other channels
            return
 
        if message.content.startswith("!update"):
-           channel = client.get_channel(int(CHIT_CHAT_CH_ID))  # Get the Discord channel object for Chit-Chat
+           channel = bot.get_channel(int(CHIT_CHAT_CH_ID))  # Get the Discord channel object for Chit-Chat
            await channel.send("Updating Discord bot script, please stand by...")
            process = subprocess.Popen([SCRIPT_BIN,SCRIPT_PATH])
            process.wait()
 """
 
-#Starts the discord client using the API key
+async def send_final_message():
+    await bot.wait_until_ready()
+    channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))  # Choose your channel ID
+    await channel.send("Bite my shiny metal ass!")  # Your final message
+
+async def logout():
+    try:
+        await send_final_message()
+    finally:
+        await bot.close()
+
+async def main():
+    try:
+        await bot.start(DISCORD_API_KEY)
+    except KeyboardInterrupt:
+        print("Detected SIGINT, closing process!")
+    finally:
+        print(f"Logging {bot.user} out of Discord!")
+        await logout()
+
+# Run the main coroutine using asyncio.run()
 try:
-    client.run(DISCORD_API_KEY)
+    asyncio.run(main())
 except KeyboardInterrupt:
-    print(f'Detected SIGINT, closing process!')
-finally:
-    print(f'Logging {client.user} out of Discord!')
-    client.close()
+    print("Detected SIGINT, closing process!")
