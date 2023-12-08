@@ -17,11 +17,14 @@ DISCORD_RAP_BOT_CHANNEL = os.environ.get('DISCORD_RAP_BOT_CHANNEL')
 DISCORD_RAP_BOT_MODEL = os.environ.get('DISCORD_RAP_BOT_MODEL')
 DISCORD_GPT4_BOT_CHANNEL = os.environ.get('DISCORD_GPT4_BOT_CHANNEL')
 DISCORD_GPT4_BOT_MODEL = os.environ.get('DISCORD_GPT4_BOT_MODEL')
+DISCORD_JOE_BOT_CHANNEL = os.environ.get('DISCORD_JOE_BOT_CHANNEL')
+DISCORD_JOE_BOT_MODEL = os.environ.get('DISCORD_JOE_BOT_MODEL')
 
 # Initialize the gpt class in the bagelgpt library
 gpt_general = bagelgpt(api_key=OPENAI_API_KEY, model=DISCORD_GENERAL_MODEL)
 gpt_rap = bagelgpt(api_key=OPENAI_API_KEY, model=DISCORD_RAP_BOT_MODEL)
 gpt_4 = bagelgpt(api_key=OPENAI_API_KEY, model=DISCORD_GPT4_BOT_MODEL)
+gpt_joe = bagelgpt(api_key=OPENAI_API_KEY, model=DISCORD_JOE_BOT_MODEL)
 
 # Set up the Discord Bot
 intents = discord.Intents.default()  # getting default intents for Discord API
@@ -49,6 +52,7 @@ async def on_message(message):
     general_channel = bot.get_channel(int(DISCORD_GENERAL_CHANNEL))
     rap_channel = bot.get_channel(int(DISCORD_RAP_BOT_CHANNEL))
     gpt4_channel = bot.get_channel(int(DISCORD_GPT4_BOT_CHANNEL))
+    joe_channel = bot.get_channel(int(DISCORD_JOE_BOT_CHANNEL))
 
     print(f"Received message: {message.content}")
     await bot.process_commands(message)
@@ -65,6 +69,9 @@ async def on_message(message):
     elif message.channel == gpt4_channel:
         await gpt4_bot(gpt4_channel, message, gpt_4)
 
+    elif message.channel == joe_channel:
+        await gpt4_bot(joe_channel, message, gpt_joe)
+   
 async def general_bot(channel, message, gpt):
     if message.content.startswith('/update'):
         await update_command()
