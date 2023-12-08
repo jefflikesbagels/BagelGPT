@@ -123,7 +123,13 @@ async def gpt4_bot(channel, message, gpt):
 
     # Delete the original attempting to create response message and insert the final response
     await attempt_message.delete()
-    await channel.send(response)
+
+    # Check if the response is split
+    if isinstance(response, list):
+        for split_response in response:
+            await channel.send(split_response)
+    else:
+        await channel.send(response)
 
 async def history_command(message):
     global history_limit

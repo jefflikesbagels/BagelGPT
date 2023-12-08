@@ -25,7 +25,7 @@ class bagelgpt:
             # print(f"OpenAI API response: ", response)                        
 
             # Extract the text from the last message in the response object
-            filtered_response = response.choices[0].message.content
+            filtered_response = response.choices[-1].message.content
             # print(f"OpenAI API response: ", filtered_response)
 
             if len(filtered_response) > 1900:        # If the length of the filtered response is greater than 1900, split it into multiple messages using the get_split_message function
@@ -65,3 +65,13 @@ class bagelgpt:
         # Status Code N/A - API Connection Error
         except openai.APIConnectionError as e:
             return f"OpenAI API returned an API Connection Error: {e}"
+
+    #Function to get split message
+    def get_split_message(self, text, max_chars=1900):
+        split_messages = []   # Initialize an empty list to hold the split messages
+
+        # Loop through the text and split it into chunks of the specified max length
+        for i in range(0, len(text), max_chars):
+            split_messages.append(text[i: i + max_chars])   # Append each chunk of text to the split_messages list
+
+        return split_messages   # Return the list of split messages
