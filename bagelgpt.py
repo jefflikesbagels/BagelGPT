@@ -8,8 +8,7 @@ class bagelgpt:
         self.client = OpenAI(api_key=self.api_key)
 
     #Function to get Zero Shot Chat Completion
-    def get_chat_completion(self, prompt, message_context, topic):
-
+    def get_chat_completion(self, prompt, topic, message_context=""):
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -37,40 +36,32 @@ class bagelgpt:
 
         # Status Code 400 - Bad Request Error
         except openai.BadRequestError as e:
-            print(f"OpenAI API returned a Bad Request Error: {e}")
             return f"OpenAI API returned a Bad Request Error: {e}"
 
         # Status Code 401 - Authentication Error
         except openai.AuthenticationError as e:
-            print(f"OpenAI API returned an Authentication Error: {e}")
             return f"OpenAI API returned an Authentication Error: {e}"
 
         # Status Code 403 - Permission Denied Error
         except openai.PermissionDeniedError as e:
-            print(f"OpenAI API returned a Permission Denied Error: {e}")
             return f"OpenAI API returned a Permission Denied Error: {e}"
 
         # Status Code 404 - Not Found Error
         except openai.NotFoundError as e:
-            print(f"OpenAI API returned a Not Found Error: {e}")
             return f"OpenAI API returned a Not Found Error: {e}"
 
         # Status Code 422 - Unprocessable Entity Error
         except openai.UnprocessableEntityError as e:
-            print(f"OpenAI API returned an Unprocessable Entity Error: {e}")
             return f"OpenAI API returned an Unprocessable Entity Error: {e}"
 
         # Status Code 429 - Rate Limit Error
         except openai.RateLimitError as e:
-            print(f"OpenAI API returned a Rate Limit Error: {e}")
             return f"OpenAI API returned a Rate Limit Error: {e}"
         
         # Status Code >=500 - Internal Server Error
         except openai.InternalServerError as e:
-            print(f"OpenAI API returned an Internal Server Error: {e}")
             return f"OpenAI API returned an Internal Server Error: {e}"
         
         # Status Code N/A - API Connection Error
-        except openai.InternalServerError as e:
-            print(f"OpenAI API returned an API Connection Error: {e}")
+        except openai.APIConnectionError as e:
             return f"OpenAI API returned an API Connection Error: {e}"
