@@ -111,6 +111,13 @@ async def gpt4_bot(channel, message, gpt):
     # Send a message to the channel to indicate that the chatbot is processing the message
     attempt_message = await channel.send("Attempting to create response...")
 
+    # Trigger bot typing
+    async def keep_typing(channel):
+        while True:
+            await channel.trigger_typing()
+            await asyncio.sleep(5)
+    typing_task = asyncio.create_task(keep_typing(message.channel))
+
     # Get or initialize conversation history for the channel
     channel_id = message.channel.id
     if channel_id not in conversation_history:
@@ -127,6 +134,8 @@ async def gpt4_bot(channel, message, gpt):
     print(f"Context:", context)
     response = gpt.get_chat_completion(message.content, channel_topic, context)
     print(f"Got response from GPT:", response)
+
+    typing_task.cancel()
 
     # Delete the original attempting to create response message and insert the final response
     await attempt_message.delete()
